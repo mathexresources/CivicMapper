@@ -1,151 +1,67 @@
-### 🧭 Popis
+# Mikuláš Planner
 
-**CivicMapper** je webová aplikace pro načítání, analýzu a vizualizaci dat z RÚIAN (Registr územní identifikace, adres a nemovitostí).
-Umožňuje rychle zjistit počet domů v libovolné obci, odlišit rodinné a bytové domy, odhadnout počet bytů, připravit exporty pro další zpracování a navrhnout optimální trasy pro roznos letáků, sčítání nebo jiné terénní akce.
+Webový nástroj pro plánování roznosu letáků pro Mikuláše v obcích ČR. Projekt kombinuje FastAPI backend, který pracuje s daty RÚIAN, a frontend postavený na Reactu a Leafletu.
 
-Původně vyvinuto pro **mikulášské obchůzky**, ale díky modulární architektuře lze použít pro:
+## Funkce
+- Vyhledání obce, stažení a uložení adresních míst z RÚIAN.
+- Heuristická klasifikace staveb na RD/BD, odhad počtu bytů, výpočet potřebných letáků.
+- Mapová vizualizace, filtrace a statistiky.
+- Návrh tras pomocí OSRM/GraphHopper nebo fallback heuristiky.
+- Export dat do CSV, GeoJSON, KML a GPX.
+- Možnost ručního nahrání RÚIAN CSV.
 
-* doručování letáků nebo poštovních zásilek
-* krizové plánování
-* komunitní mapování
-* územní analýzy a vizualizace
+## Rychlý start
 
----
+### Požadavky
+- Docker a Docker Compose
 
-### ⚙️ Funkce
-
-* Vyhledání obce podle názvu
-* Stažení dat o všech stavbách z RÚIAN (adresní místa, stavební objekty)
-* Rozlišení typu: rodinný dům / bytový dům
-* Odhad počtu bytů podle sdílených adresních míst
-* Generování doporučení pro doručovací body
-* Export do CSV, GeoJSON, KML, GPX
-* Návrh tras pomocí OSRM / GraphHopper (volitelně)
-* Webové mapové rozhraní (Leaflet + React)
-* Lokální cache pro rychlé opakované použití (SQLite)
-* Dockerized deployment
-
----
-
-### 🧩 Architektura
-
-**Backend:** Python + FastAPI
-**Frontend:** React + TypeScript + Vite + Leaflet
-**Databáze:** SQLite (cache)
-**Routing engines:** OSRM / GraphHopper (volitelné přes .env)
-**Mapové podklady:** OSM / OpenMapTiles (bez API klíče)
-
----
-
-### 🗺️ API
-
-| Endpoint                   | Metoda | Popis                               |
-| -------------------------- | ------ | ----------------------------------- |
-| `/api/search-municipality` | POST   | Vyhledá obec podle názvu            |
-| `/api/plan`                | POST   | Vygeneruje plán domů a typy objektů |
-| `/api/route`               | POST   | Navrhne trasu dle zvoleného engine  |
-| `/api/export.csv`          | GET    | Export do CSV                       |
-| `/api/export.geojson`      | GET    | Export do GeoJSON                   |
-| `/api/export.kml`          | GET    | Export do KML                       |
-| `/api/export.gpx`          | GET    | Export do GPX                       |
-| `/api/status`              | GET    | Healthcheck                         |
-
----
-
-### 🧰 Instalace
-
-#### 1. Klonování
-
+### Spuštění
 ```bash
-git clone https://github.com/<user>/CivicMapper.git
-cd CivicMapper
+docker compose up --build
 ```
+Backend poběží na `http://localhost:8000`, frontend na `http://localhost:5173`.
 
-#### 2. Konfigurace
+### Konfigurace
+Zkopírujte `.env.example` na `.env` a upravte hodnoty:
 
-Zkopíruj `.env.example` → `.env` a uprav:
+- `RUIAN_SOURCE_URL` – volitelný vlastní endpoint pro stahování dat.
+- `OSRM_BASE_URL`, `GH_BASE_URL`, `GH_KEY` – externí routing služby.
+- `TILE_STYLE_URL` – URL stylu MapLibre kompatibilních dlaždic.
 
-```env
-RUIAN_SOURCE_URL=https://vdp.cuzk.cz/vdp/ruian/adresy/
-OSRM_BASE_URL=https://router.project-osrm.org
-GH_BASE_URL=
-GH_KEY=
-TILE_STYLE_URL=https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png
-```
+### Backend API
+- `POST /api/search-municipality` – vyhledání obce.
+- `POST /api/plan` – vytvoření plánu a uložení do cache.
+- `POST /api/route` – výpočet trasy.
+- `POST /api/ruian-upload` – ruční import CSV.
+- `GET /api/export.(csv|geojson|kml|gpx)` – export.
+- `GET /api/status` – healthcheck.
 
-#### 3. Spuštění (Docker)
-
+Příklady:
 ```bash
-docker-compose up --build
+curl -X POST http://localhost:8000/api/search-municipality \
+  -H 'Content-Type: application/json' \
+  -d '{"q": "Jihlava"}'
+
+curl -X POST http://localhost:8000/api/plan \
+  -H 'Content-Type: application/json' \
+  -d '{"kod_obce": "586846", "routing": "none"}'
 ```
 
-Frontend: [http://localhost:5173](http://localhost:5173)
-Backend API: [http://localhost:8000](http://localhost:8000)
-
----
-
-### 🧪 Testy
-
+### Testy
 ```bash
-pytest tests/
+cd backend
+pytest
 ```
 
-Testují:
+### Právní poznámky
+Projekt pracuje pouze s veřejně dostupnými daty RÚIAN. Nevyužívá osobní údaje ani neodvozuje přítomnost dětí v objektech. Odhad počtu bytů je heuristický a může být nepřesný.
 
-* Klasifikaci RD/BD
-* Výpočet bytů
-* Exportery (CSV/KML/GPX)
-* Routing fallback algoritmus
+### Datové limity
+Pro velká města doporučujeme spuštění backendu s dostatečnou pamětí a časovým limitem pro stahování RÚIAN dat. Interní SQLite cache uchovává poslední načtená data dle kódu obce.
 
----
-
-### 📤 Exportované formáty
-
-* **CSV:** tabulka adres, typ objektu, počet bytů
-* **GeoJSON:** pro QGIS / webové mapy
-* **KML:** pro Google Earth / Mapy.cz
-* **GPX:** pro navigace (OsmAnd, Locus, apod.)
-
----
-
-### ⚖️ Právní poznámky
-
-* Používá pouze **veřejná data z RÚIAN**.
-* Neobsahuje a nesmí obsahovat žádné osobní údaje.
-* Nepokouší se odhadovat přítomnost osob nebo dětí.
-* Dodržuje GDPR a zákon č. 110/2019 Sb. o zpracování osobních údajů.
-
----
-
-### 📦 Struktura projektu
-
+## Struktura
 ```
-CivicMapper/
-├── backend/
-│   ├── main.py
-│   ├── ruian_parser.py
-│   ├── router_engine.py
-│   ├── export/
-│   └── db/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── api/
-├── tests/
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-└── README.md
+backend/    FastAPI aplikace, business logika, testy
+frontend/   Vite + React aplikace
+backend/data/sample_ruian.csv  ukázkový CSV soubor pro testování
 ```
-
----
-
-### 🔒 Licence
-
-MIT License.
-Použití dat RÚIAN podléhá licenčním podmínkám ČÚZK (Creative Commons CC BY 4.0).
-
----
-
-Chceš, abych k tomu vytvořil i hotový obsah `README.md` souboru s markdown formátováním připravený k vložení do repozitáře (včetně odkazů, ikon a badge)?
