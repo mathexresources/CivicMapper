@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  backend:
+    build: .
+    container_name: mikulas-backend
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./mikulash.db}
+      - RUIAN_SOURCE_URL=${RUIAN_SOURCE_URL:-}
+      - OSRM_BASE_URL=${OSRM_BASE_URL:-}
+      - GH_BASE_URL=${GH_BASE_URL:-}
+      - GH_KEY=${GH_KEY:-}
+      - TILE_STYLE_URL=${TILE_STYLE_URL:-}
+    volumes:
+      - ./backend/data:/app/data
+    ports:
+      - "8000:8000"
+  frontend:
+    image: node:18-alpine
+    container_name: mikulas-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      - VITE_TILE_STYLE_URL=${TILE_STYLE_URL:-}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend

@@ -1,0 +1,60 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.app-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100%;
+}
+
+.sidebar {
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #f7f9fc;
+  border-right: 1px solid #d0d7de;
+}
+
+.map-container {
+  height: 100%;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: #1f6feb;
+  color: white;
+}
+
+button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.stats {
+  margin-top: 1rem;
+}
+
+.filters {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.route-list {
+  margin-top: 1rem;
+}
+
+.leaflet-container {
+  height: 100%;
+}
